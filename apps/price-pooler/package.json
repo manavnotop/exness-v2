@@ -12,7 +12,8 @@
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/ws": "^8.18.1",
-    "@repo/redis": "workspace:*"
+    "@repo/redis": "workspace:*",
+    "@repo/types" : "workspace:*"
   },
   "keywords": [],
   "author": "",

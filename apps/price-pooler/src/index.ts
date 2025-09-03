@@ -1,6 +1,7 @@
 import { WebSocket } from 'ws';
 import "dotenv/config"
 import { publisher } from '@repo/redis/pubsub'
+import { BackpackDataType, FilteredData } from '@repo/types/types'
 
 const ws = new WebSocket(process.env.WS_URL!);
 
@@ -24,6 +25,21 @@ ws.onopen = () => {
 }
 
 ws.onmessage = async (event) => {
-  const data = JSON.parse(event.data.toString()).data;
-  console.log(data)
+  const data: BackpackDataType = JSON.parse(event.data.toString()).data;
+
+  const ask = Number(data.a).toFixed(4);
+  const ask_int_string = ask.split('.')[0] + ask.split('.')[1]!
+  const ask_price = Number(ask_int_string);
+
+  const bid = Number(data.b).toFixed(4);
+  const bid_int_string = bid.split('.')[0] + bid.split('.')[1]!
+  const bid_price = Number(bid_int_string);
+
+  const filteredData: FilteredData = {
+    asset_name: data.s,
+    ask_price,
+    bid_price,
+    decimal: 4
+  }
+  await publisher.publish("trade-info", JSON.stringify(filteredData));
 }

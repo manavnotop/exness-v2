@@ -1,7 +1,12 @@
 import { WebSocket } from 'ws';
 import "dotenv/config"
+import { publisher } from '@repo/redis/pubsub'
 
 const ws = new WebSocket(process.env.WS_URL!);
+
+(async () => (
+  await publisher.connect()
+))()
 
 ws.onopen = () => {
   console.log('socket connected');
@@ -19,6 +24,6 @@ ws.onopen = () => {
 }
 
 ws.onmessage = async (event) => {
-  const data = JSON.parse(event.data.toString());
-  console.log(data);
+  const data = JSON.parse(event.data.toString()).data;
+  console.log(data)
 }

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { SignUpBody } from '@repo/types/zod'
-import jwt from "jsonwebtoken"
+import jwt, { JwtPayload } from "jsonwebtoken"
 import "dotenv/config"
 import { sendSigninEmail } from "../mail";
 
@@ -23,5 +23,25 @@ export const signupController = async (req: Request, res: Response) => {
 
   return res.status(200).json({
     "message": "sign up successfull"
+  })
+}
+
+export const signinController = async (req: Request, res: Response) => {
+  const  token  = req.query.token?.toString();
+
+  if(!token){
+   res.status(400).json({
+      "message": "token not found"
+    })
+    return;
+  }
+
+  const email = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload
+
+  res.cookie("jwt", token);
+  res.cookie("email", email);
+
+  res.json({
+    message: "login successful"
   })
 }

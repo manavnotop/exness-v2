@@ -9,3 +9,7 @@ const client: RedisClientType = createClient({
 export const publisher: RedisClientType = client.duplicate()
 
 export const subscriber: RedisClientType = client.duplicate();
+
+export const PricePoolerStreamClient: RedisClientType = client.duplicate();
+
+export const TradeOrderStreamClient: RedisClientType = client.duplicate();

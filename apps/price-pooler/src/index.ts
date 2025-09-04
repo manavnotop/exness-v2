@@ -3,6 +3,8 @@ import "dotenv/config"
 import { publisher } from '@repo/redis/pubsub'
 import { BackpackDataType, FilteredData } from '@repo/types/types'
 
+let filteredDataArray: FilteredData[] = [];
+
 const ws = new WebSocket(process.env.WS_URL!);
 
 (async () => (
@@ -41,5 +43,14 @@ ws.onmessage = async (event) => {
     bid_price,
     decimal: 4
   }
-  await publisher.publish("trade-info", JSON.stringify(filteredData));
+
+  filteredDataArray.push(filteredData);
+
+  setInterval(() => {
+    console.log(filteredDataArray);
+    filteredDataArray.forEach(async (trade) => {
+      await publisher.publish("trade-info", JSON.stringify(trade));
+    })
+    filteredDataArray = [];
+  }, 100);
 }

@@ -11,7 +11,6 @@ export type BackpackDataType = {
 }
 
 export type FilteredData = {
-  asset_name: string,
   ask_price: number,
   bid_price: number,
   decimal: number,

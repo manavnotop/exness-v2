@@ -1,9 +1,10 @@
-import { WebSocket } from 'ws';
+import { CLOSING, WebSocket } from 'ws';
 import "dotenv/config"
 import  client  from '@repo/redis/pubsub'
 import { BackpackDataType, FilteredData } from '@repo/types/types'
 
-let filteredDataArray: FilteredData[] = [];
+let filteredDataArray: Record<string, FilteredData>[] = [];
+let lastDate = Date.now();
 
 const ws = new WebSocket(process.env.WS_URL!);
 
@@ -38,22 +39,26 @@ ws.onmessage = async (event) => {
   const bid_price = Number(bid_int_string);
 
   const filteredData: FilteredData = {
-    asset_name: data.s,
     ask_price,
     bid_price,
     decimal: 4
   }
 
-  filteredDataArray.push(filteredData);
+  const trade: Record<string, FilteredData> = {}
 
-  setInterval(() => {
-    console.log(filteredDataArray);
-    filteredDataArray.forEach(async (trade) => {
+  trade[data.s]= filteredData;
+
+  filteredDataArray.push(trade);
+
+  if(Date.now() - lastDate > 100 ){
+    filteredDataArray.forEach(async () => {
+      console.log(trade);
       await client.publish("trade-info", JSON.stringify(trade));
-      await client.xAdd('price:update', "*", {
+      await client.xAdd("price:update", "*", {
         message: JSON.stringify(filteredData)
-      });
+      })
     })
     filteredDataArray = [];
-  }, 100);
+    lastDate = Date.now();
+  }
 }

@@ -11,13 +11,13 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "@types/ws": "^8.18.1",
-    "@repo/redis": "workspace:*"
+    "@types/ws": "^8.18.1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "ws": "^8.18.3"
+    "ws": "^8.18.3",
+    "@repo/redis": "workspace:*"
   }
 }

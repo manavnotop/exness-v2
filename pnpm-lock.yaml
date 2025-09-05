@@ -18,6 +18,12 @@ importers:
         specifier: 5.9.2
         version: 5.9.2
 
+  apps/engine:
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
+
   apps/http:
     dependencies:
       cookie-parser:
@@ -54,6 +60,9 @@ importers:
 
   apps/price-pooler:
     dependencies:
+      '@repo/redis':
+        specifier: workspace:*
+        version: link:../../packages/redis
       dotenv:
         specifier: ^17.2.2
         version: 17.2.2
@@ -61,9 +70,6 @@ importers:
         specifier: ^8.18.3
         version: 8.18.3
     devDependencies:
-      '@repo/redis':
-        specifier: workspace:*
-        version: link:../../packages/redis
       '@repo/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -113,13 +119,13 @@ importers:
 
   apps/ws:
     dependencies:
+      '@repo/redis':
+        specifier: workspace:*
+        version: link:../../packages/redis
       ws:
         specifier: ^8.18.3
         version: 8.18.3
     devDependencies:
-      '@repo/redis':
-        specifier: workspace:*
-        version: link:../../packages/redis
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config

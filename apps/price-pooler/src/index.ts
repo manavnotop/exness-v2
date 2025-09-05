@@ -1,6 +1,6 @@
 import { WebSocket } from 'ws';
 import "dotenv/config"
-import { publisher, PricePoolerStreamClient } from '@repo/redis/pubsub'
+import  client  from '@repo/redis/pubsub'
 import { BackpackDataType, FilteredData } from '@repo/types/types'
 
 let filteredDataArray: FilteredData[] = [];
@@ -8,7 +8,7 @@ let filteredDataArray: FilteredData[] = [];
 const ws = new WebSocket(process.env.WS_URL!);
 
 (async () => (
-  await publisher.connect()
+  await client.connect()
 ))()
 
 ws.onopen = () => {
@@ -49,8 +49,8 @@ ws.onmessage = async (event) => {
   setInterval(() => {
     console.log(filteredDataArray);
     filteredDataArray.forEach(async (trade) => {
-      await publisher.publish("trade-info", JSON.stringify(trade));
-      await PricePoolerStreamClient.xAdd('price:update', "*", {
+      await client.publish("trade-info", JSON.stringify(trade));
+      await client.xAdd('price:update', "*", {
         message: JSON.stringify(filteredData)
       });
     })

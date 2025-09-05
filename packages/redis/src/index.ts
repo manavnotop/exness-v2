@@ -6,10 +6,4 @@ const client: RedisClientType = createClient({
   url: process.env.REDIS_URL!
 })
 
-export const publisher: RedisClientType = client.duplicate()
-
-export const subscriber: RedisClientType = client.duplicate();
-
-export const PricePoolerStreamClient: RedisClientType = client.duplicate();
-
-export const TradeOrderStreamClient: RedisClientType = client.duplicate();
+export default client;

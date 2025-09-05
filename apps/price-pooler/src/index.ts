@@ -1,10 +1,28 @@
 import { CLOSING, WebSocket } from 'ws';
 import "dotenv/config"
 import  client  from '@repo/redis/pubsub'
-import { BackpackDataType, FilteredData } from '@repo/types/types'
+import { BackpackDataType, FilteredData, PriceUpdate } from '@repo/types/types'
 
-let filteredDataArray: Record<string, FilteredData>[] = [];
 let lastDate = Date.now();
+
+let priceUpdates: PriceUpdate = {
+    SOL: {
+      ask_price: 0,
+      bid_price: 0,
+      decimal: 4
+    },
+    BTC: {
+      ask_price: 0,
+      bid_price: 0,
+      decimal: 4
+    },
+    ETH: {
+      ask_price: 0,
+      bid_price: 0,
+      decimal: 4
+    },
+  }
+
 
 const ws = new WebSocket(process.env.WS_URL!);
 
@@ -29,7 +47,6 @@ ws.onopen = () => {
 
 ws.onmessage = async (event) => {
   const data: BackpackDataType = JSON.parse(event.data.toString()).data;
-
   const ask = Number(data.a).toFixed(4);
   const ask_int_string = ask.split('.')[0] + ask.split('.')[1]!
   const ask_price = Number(ask_int_string);
@@ -44,21 +61,22 @@ ws.onmessage = async (event) => {
     decimal: 4
   }
 
-  const trade: Record<string, FilteredData> = {}
-
-  trade[data.s]= filteredData;
-
-  filteredDataArray.push(trade);
+  if(data.s === "SOL_USDC_PERP"){
+    priceUpdates.SOL = filteredData;
+  }
+  else if(data.s === "ETH_USDC_PERP"){
+    priceUpdates.ETH = filteredData
+  }
+  else {
+    priceUpdates.BTC = filteredData
+  }
+  console.log(priceUpdates);
 
   if(Date.now() - lastDate > 100 ){
-    filteredDataArray.forEach(async () => {
-      console.log(trade);
-      await client.publish("trade-info", JSON.stringify(trade));
-      await client.xAdd("price:update", "*", {
-        message: JSON.stringify(filteredData)
-      })
+    await client.publish("trade-info", JSON.stringify(priceUpdates));
+    await client.xAdd("price:update", "*", {
+      message: JSON.stringify(priceUpdates)
     })
-    filteredDataArray = [];
     lastDate = Date.now();
   }
 }

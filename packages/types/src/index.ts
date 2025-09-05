@@ -15,3 +15,9 @@ export type FilteredData = {
   bid_price: number,
   decimal: number,
 }
+
+export type PriceUpdate = {
+  SOL : FilteredData,
+  BTC: FilteredData,
+  ETH: FilteredData
+}

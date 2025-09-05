@@ -1,6 +1,6 @@
 import { CLOSING, WebSocket } from 'ws';
 import "dotenv/config"
-import  client  from '@repo/redis/pubsub'
+import  { pricePusher, publisher }  from '@repo/redis/pubsub'
 import { BackpackDataType, FilteredData, PriceUpdate } from '@repo/types/types'
 
 let lastDate = Date.now();
@@ -26,9 +26,10 @@ let priceUpdates: PriceUpdate = {
 
 const ws = new WebSocket(process.env.WS_URL!);
 
-(async () => (
-  await client.connect()
-))()
+(async () => {
+  await pricePusher.connect();
+  await publisher.connect();
+})()
 
 ws.onopen = () => {
   console.log('socket connected');
@@ -73,8 +74,16 @@ ws.onmessage = async (event) => {
   console.log(priceUpdates);
 
   if(Date.now() - lastDate > 100 ){
-    await client.publish("trade-info", JSON.stringify(priceUpdates));
-    await client.xAdd("price:update", "*", {
+    let dataToBeSent: Record<string, FilteredData> = {};
+    for (const [key, value] of Object.entries(priceUpdates)){
+      if(value.ask_price === 0){
+        continue;
+      }
+      dataToBeSent[key] = value; 
+    }
+
+    await publisher.publish("ws:price:update", JSON.stringify(priceUpdates));
+    await pricePusher.xAdd("price:update", "*", {
       message: JSON.stringify(priceUpdates)
     })
     lastDate = Date.now();

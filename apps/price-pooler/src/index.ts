@@ -83,7 +83,8 @@ ws.onmessage = async (event) => {
     }
 
     await publisher.publish("ws:price:update", JSON.stringify(priceUpdates));
-    await pricePusher.xAdd("price:update", "*", {
+    await pricePusher.xAdd("stream:engine", "*", {
+      type: "ORDER",
       message: JSON.stringify(priceUpdates)
     })
     lastDate = Date.now();

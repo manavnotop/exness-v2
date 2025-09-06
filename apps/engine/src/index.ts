@@ -1,4 +1,4 @@
-import { enginePuller }  from '@repo/redis/pubsub';
+import { enginePuller, enginePusher } from '@repo/redis/pubsub';
 
 let prices = {
   BTC: 1000,
@@ -7,7 +7,7 @@ let prices = {
 }
 
 let balances = {
-
+  
 }
 
 let openOrders = {
@@ -17,19 +17,30 @@ let openOrders = {
 (async () => {
   enginePuller.connect();
 
-  while(true){
-    const response = await enginePuller.xRead(
-      { key: 'stream:engine', id: "$"},
-      {
+  while (true) {
+    const response = await enginePuller.xRead({
+      key: 'stream:engine', id: "$" 
+    }, {
         BLOCK: 0,
         COUNT: 1
       }
     )
 
-    if(response){
-      if(response[0]?.messages[0]?.message.type === 'trade'){
-        console.log(response[0].messages[0].message.type)
-      }
+    if(!response){
+      continue;
+    }
+
+    if(response[0]?.messages[0]?.message.type === 'trade' && response[0].messages[0].message.message){
+      const tradeInfo = JSON.parse(response[0].messages[0].message.message)
+      const id = tradeInfo.id;
+      // console.log(id);
+      // await enginePusher.xAdd('stream:engine:acknowledgement', "", {
+      //   id: id
+      // })
+    }
+    else{
+      const priceUpdateInfo = JSON.parse(response[0]?.messages[0]?.message.message!);
+      console.log(priceUpdateInfo);
     }
   }
 })()

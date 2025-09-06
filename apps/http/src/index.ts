@@ -5,7 +5,7 @@ import "dotenv/config"
 import { tradePusher} from '@repo/redis/pubsub';
 
 const app = express();
-(async() => {
+(async () => {
   await tradePusher.connect()
 })()
 

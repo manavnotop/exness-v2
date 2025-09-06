@@ -1,5 +1,6 @@
 import { enginePuller, enginePusher } from '@repo/redis/pubsub';
 import { handleUserAdd } from './createUser';
+import { handlePriceUpdate } from './priceupdate';
 
 let prices = {
   BTC: 1000,
@@ -48,7 +49,9 @@ let openOrders = {
       //add logic for closing trading and then acknowledge the server
     }
     else if (payload?.type === 'price-update' && payload.message) {
-      //add logic for updating price for local object
+      console.log('reached price update');
+      const data = JSON.parse(payload.message);
+      await handlePriceUpdate(data);
     }
     else if (payload?.type === 'user-add' && payload.message) {
       console.log('reached engine');

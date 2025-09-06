@@ -24,6 +24,9 @@ importers:
         specifier: workspace:*
         version: link:../../packages/redis
     devDependencies:
+      '@repo/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config

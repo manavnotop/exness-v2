@@ -1,5 +1,6 @@
+import { UserStore } from "@repo/types/types"
 
-let users = {
+let users: UserStore = {
 
 }
 

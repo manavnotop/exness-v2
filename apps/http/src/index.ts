@@ -3,6 +3,7 @@ import router from './router';
 import cookieParser from 'cookie-parser';
 import "dotenv/config"
 import { tradePusher} from '@repo/redis/pubsub';
+import { ResponseLoop } from './reponseloop';
 
 const app = express();
 (async () => {
@@ -11,6 +12,8 @@ const app = express();
 
 app.use(express.json());
 app.use(cookieParser());
+
+export const responseLoop = new ResponseLoop();
 
 app.use("/api/v1", router);
 

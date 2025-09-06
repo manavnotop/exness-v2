@@ -16,6 +16,7 @@ let openOrders = {
 
 (async () => {
   enginePuller.connect();
+  enginePusher.connect();
 
   while (true) {
     const response = await enginePuller.xRead({
@@ -33,14 +34,14 @@ let openOrders = {
     if(response[0]?.messages[0]?.message.type === 'trade' && response[0].messages[0].message.message){
       const tradeInfo = JSON.parse(response[0].messages[0].message.message)
       const id = tradeInfo.id;
-      // console.log(id);
-      // await enginePusher.xAdd('stream:engine:acknowledgement', "", {
-      //   id: id
-      // })
+      console.log(id);
+      await enginePusher.xAdd('stream:engine:acknowledgement', "*", {
+        id: id
+      })
     }
     else{
       const priceUpdateInfo = JSON.parse(response[0]?.messages[0]?.message.message!);
-      console.log(priceUpdateInfo);
+      //console.log(priceUpdateInfo);
     }
   }
 })()

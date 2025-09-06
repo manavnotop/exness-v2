@@ -9,9 +9,9 @@ export class ResponseLoop {
     this.loop();
   }
 
-  async loop(){
-    while(1){
-      const reponse = await httpPuller.xRead({
+  async loop() {
+    while (1) {
+      const response = await httpPuller.xRead({
         key: 'stream:engine:acknowledgement',
         id: "$",
       }, {
@@ -19,9 +19,10 @@ export class ResponseLoop {
         COUNT: 1
       })
 
-      if(reponse){
-        if(reponse[0]?.messages[0]?.message.type === "trade-acknowledgement" && reponse[0].messages[0].message.message){
-          const id = JSON.parse(reponse[0].messages[0].message.message).id;
+      if (response) {
+
+        if (response[0]?.messages[0]?.message.type === "trade-acknowledgement" && response[0].messages[0].message.id) {
+          const id = (response[0].messages[0].message.id);
           this.idResponse[id]!();
           delete this.idResponse[id];
         }
@@ -29,15 +30,15 @@ export class ResponseLoop {
     }
   }
 
-  waitForMessage(callbackId: string){
+  waitForMessage(callbackId: string) {
     return new Promise<void>((resolve, reject) => {
       this.idResponse[callbackId] = resolve;
       setTimeout(() => {
-        if(this.idResponse[callbackId]){
+        if (this.idResponse[callbackId]) {
           delete this.idResponse[callbackId];
           reject();
         }
-      }, 5000);
+      }, 3500);
     })
   }
 }

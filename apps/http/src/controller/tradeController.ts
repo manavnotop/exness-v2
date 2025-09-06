@@ -1,30 +1,30 @@
 import { Request, Response } from "express";
-import { tradePusher} from "@repo/redis/pubsub";
+import { tradePusher } from "@repo/redis/pubsub";
 import { responseLoop } from "..";
 
 export const openTradeController = async (req: Request, res: Response) => {
 
   const id = Date.now().toString();
 
-  const stimulatedInfo = {id, type: 'sell', asset: 'SOL'};
+  const stimulatedInfo = { id, type: 'sell', asset: 'SOL' };
 
   await tradePusher.xAdd('stream:engine', '*', {
     type: "trade",
-    message : JSON.stringify(stimulatedInfo)
+    message: JSON.stringify(stimulatedInfo)
   })
 
-  try{
-    const response = await responseLoop.waitForMessage(id);
+  try {
+    await responseLoop.waitForMessage(id);
 
     res.json({
       message: "order placed"
     })
   }
-  catch(err){
+  catch (err) {
+    res.status(411).json({
+      message: "trade not successful"
+    })
 
   }
 
-  res.json({
-    message: "trade opened successfully"
-  })
 }

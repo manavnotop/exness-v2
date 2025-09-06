@@ -2,12 +2,13 @@ import express, { Request, Response } from 'express';
 import router from './router';
 import cookieParser from 'cookie-parser';
 import "dotenv/config"
-import { tradePusher} from '@repo/redis/pubsub';
+import { enginePusher, tradePusher} from '@repo/redis/pubsub';
 import { ResponseLoop } from './reponseloop';
 
 const app = express();
 (async () => {
   await tradePusher.connect()
+  await enginePusher.connect();
 })()
 
 app.use(express.json());

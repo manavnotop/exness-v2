@@ -17,7 +17,23 @@ export type FilteredData = {
 }
 
 export type PriceUpdate = {
-  SOL : FilteredData,
+  SOL: FilteredData,
   BTC: FilteredData,
   ETH: FilteredData
+}
+
+export interface Balance {
+  amount: number,
+  currency: string
+}
+
+export interface OpenTrade {
+  id: string;
+  openPrice: number;
+  closePrice?: number;
+  leverage: number;
+  pnl: number;
+  asset: PriceUpdate['SOL'] | PriceUpdate['ETH'] | PriceUpdate['BTC'];
+  liquidated: boolean;
+  createdAt: Date;
 }

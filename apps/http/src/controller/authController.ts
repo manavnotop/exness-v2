@@ -3,6 +3,7 @@ import { SignUpBody } from '@repo/types/zod'
 import jwt, { JwtPayload } from "jsonwebtoken"
 import "dotenv/config"
 import { sendSigninEmail } from "../mail";
+import { enginePusher } from "@repo/redis/pubsub";
 
 export const signupController = async (req: Request, res: Response) => {
   const { data, success } = SignUpBody.safeParse(req.body);
@@ -20,6 +21,10 @@ export const signupController = async (req: Request, res: Response) => {
   console.log(jwtToken);
 
   await sendSigninEmail(data.email, jwtToken)
+  await enginePusher.xAdd("stream:engine", "*", {
+    type: "user-add",
+    message: JSON.stringify(data)
+  })
 
   return res.status(200).json({
     "message": "sign up successfull"
@@ -27,10 +32,10 @@ export const signupController = async (req: Request, res: Response) => {
 }
 
 export const signinController = async (req: Request, res: Response) => {
-  const  token  = req.query.token?.toString();
+  const token = req.query.token?.toString();
 
-  if(!token){
-   res.status(400).json({
+  if (!token) {
+    res.status(400).json({
       "message": "token not found"
     })
     return;

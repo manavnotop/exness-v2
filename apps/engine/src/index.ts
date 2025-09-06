@@ -1,4 +1,5 @@
 import { enginePuller, enginePusher } from '@repo/redis/pubsub';
+import { handleUserAdd } from './createUser';
 
 let prices = {
   BTC: 1000,
@@ -7,12 +8,13 @@ let prices = {
 }
 
 let balances = {
-  
+
 }
 
 let openOrders = {
 
 };
+
 
 (async () => {
   enginePuller.connect();
@@ -20,19 +22,21 @@ let openOrders = {
 
   while (true) {
     const response = await enginePuller.xRead({
-      key: 'stream:engine', id: "$" 
+      key: 'stream:engine', id: "$"
     }, {
-        BLOCK: 0,
-        COUNT: 1
-      }
+      BLOCK: 0,
+      COUNT: 1
+    }
     )
 
-    if(!response){
+    if (!response) {
       continue;
     }
 
-    if(response[0]?.messages[0]?.message.type === 'trade' && response[0].messages[0].message.message){
-      const tradeInfo = JSON.parse(response[0].messages[0].message.message)
+    const payload = response[0]?.messages[0]?.message;
+
+    if (payload?.type === 'trade-open' && payload.message) {
+      const tradeInfo = JSON.parse(payload.message)
       const id = tradeInfo.id;
       console.log(id);
       await enginePusher.xAdd('stream:engine:acknowledgement', "*", {
@@ -40,9 +44,15 @@ let openOrders = {
         id: id
       })
     }
-    else{
-      const priceUpdateInfo = JSON.parse(response[0]?.messages[0]?.message.message!);
-      //console.log(priceUpdateInfo);
+    else if (payload?.type === 'trade-close' && payload.message) {
+      //add logic for closing trading and then acknowledge the server
+    }
+    else if (payload?.type === 'price-update' && payload.message) {
+      //add logic for updating price for local object
+    }
+    else if (payload?.type === 'user-add' && payload.message) {
+      console.log('reached engine');
+      await handleUserAdd(payload.message)
     }
   }
 })()

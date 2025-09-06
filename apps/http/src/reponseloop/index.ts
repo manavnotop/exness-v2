@@ -1,4 +1,5 @@
 import { httpPuller } from "@repo/redis/pubsub"
+import { json } from "express";
 
 export class ResponseLoop {
   private idResponse: Record<string, () => void> = {}
@@ -18,23 +19,23 @@ export class ResponseLoop {
         COUNT: 1
       })
 
-      if(!reponse){
-        continue;
+      if(reponse){
+        if(reponse[0]?.messages[0]?.message.type === "trade-acknowledgement" && reponse[0].messages[0].message.message){
+          const id = JSON.parse(reponse[0].messages[0].message.message).id;
+          this.idResponse[id]!();
+          delete this.idResponse[id];
+        }
       }
-
-      const { messages } = reponse[0];
-      console.log(messages[0].message.id);
-      this.idResponse[messages[0].message.id]();
-      delete this.idResponse[messages[0].message.id];
     }
   }
 
   waitForMessage(callbackId: string){
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       this.idResponse[callbackId] = resolve;
       setTimeout(() => {
         if(this.idResponse[callbackId]){
-          reject;
+          delete this.idResponse[callbackId];
+          reject();
         }
       }, 5000);
     })

@@ -36,6 +36,7 @@ let openOrders = {
       const id = tradeInfo.id;
       console.log(id);
       await enginePusher.xAdd('stream:engine:acknowledgement', "*", {
+        type: "trade-acknowledgement",
         id: id
       })
     }

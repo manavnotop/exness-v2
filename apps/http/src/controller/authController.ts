@@ -4,10 +4,11 @@ import jwt, { JwtPayload } from "jsonwebtoken"
 import "dotenv/config"
 import { sendSigninEmail } from "../mail";
 import { enginePusher } from "@repo/redis/pubsub";
+import { responseLoop } from "..";
 
 export const signupController = async (req: Request, res: Response) => {
   const { data, success } = SignUpBody.safeParse(req.body);
-
+  const id = Date.now().toString();
   if (!success) {
     return res.status(404).json({
       "message": "invalid input"
@@ -20,15 +21,30 @@ export const signupController = async (req: Request, res: Response) => {
 
   console.log(jwtToken);
 
-  await sendSigninEmail(data.email, jwtToken)
+  const toSend = {...data, id}
+  
+  //await sendSigninEmail(data.email, jwtToken)
   await enginePusher.xAdd("stream:engine", "*", {
     type: "user-add",
-    message: JSON.stringify(data)
+    message: JSON.stringify(toSend)
   })
 
-  return res.status(200).json({
-    "message": "sign up successfull"
-  })
+  try{
+    await responseLoop.waitForMessage(id);
+    res.json({
+      message: "user created successfully"
+    })
+  }
+  catch(error){
+    console.log(error);
+    res.status(411).json({
+      message: "error occured while creating a user"
+    })
+  }
+
+  // return res.status(200).json({
+  //   "message": "sign up successfull"
+  // })
 }
 
 export const signinController = async (req: Request, res: Response) => {

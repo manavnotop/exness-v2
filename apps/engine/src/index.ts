@@ -1,21 +1,6 @@
 import { enginePuller, enginePusher } from '@repo/redis/pubsub';
-import { handleUserAdd } from './createUser';
 import { handlePriceUpdate } from './priceupdate';
-
-let prices = {
-  BTC: 1000,
-  SOL: 1000,
-  ETH: 1000,
-}
-
-let balances = {
-
-}
-
-let openOrders = {
-
-};
-
+import { handleUserAdd } from './createUser';
 
 (async () => {
   enginePuller.connect();
@@ -49,13 +34,12 @@ let openOrders = {
       //add logic for closing trading and then acknowledge the server
     }
     else if (payload?.type === 'price-update' && payload.message) {
-      console.log('reached price update');
+      //console.log('reached price update');
       const data = JSON.parse(payload.message);
       await handlePriceUpdate(data);
     }
     else if (payload?.type === 'user-add' && payload.message) {
-      console.log('reached engine');
-      await handleUserAdd(payload.message)
+      await handleUserAdd(payload.message);
     }
   }
 })()

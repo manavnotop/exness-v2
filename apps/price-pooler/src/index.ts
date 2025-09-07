@@ -71,7 +71,7 @@ ws.onmessage = async (event) => {
   else {
     priceUpdates.BTC = filteredData
   }
-  console.log(priceUpdates);
+  //console.log(priceUpdates);
 
   if(Date.now() - lastDate > 100 ){
     let dataToBeSent: Record<string, FilteredData> = {};

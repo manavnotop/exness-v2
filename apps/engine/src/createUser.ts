@@ -1,4 +1,5 @@
-import { UserStore } from "@repo/types/types"
+import { UserStore } from "@repo/types/types";
+import { enginePusher } from "@repo/redis/pubsub";
 
 let users: UserStore = {
 
@@ -16,6 +17,7 @@ export async function handleUserAdd(message: string) {
   try {
     const data = JSON.parse(message);
     const email = data.email;
+    const id = data.id;
 
     if (!email) {
       console.log('email missing');
@@ -30,6 +32,10 @@ export async function handleUserAdd(message: string) {
       console.log('user already exists');
     }
 
+    await enginePusher.xAdd('stream:engine:acknowledgement', "*", {
+      type: "user-acknowledgement",
+      id: id
+    })
     console.log(users);
   }
   catch (error) {

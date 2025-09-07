@@ -53,3 +53,19 @@ export async function handleOpenTrade(email: string, trade: Trade, id: string){
     id: id
   })
 }
+
+export async function handleCloseTrade(email: string, orderId: string, id: string){
+  console.log(users[email]?.openTrades)
+  const user = users[email];
+
+  const tradeIndex = user?.openTrades.findIndex((t) => t.id === orderId);
+  console.log("this is trade index ", tradeIndex);
+  
+  user?.openTrades.splice(tradeIndex!, 1);
+
+  await enginePusher.xAdd('stream:engine:acknowledgement', "*", {
+    type: "trade-close",
+    id: id
+  })
+  console.log(users[email]?.openTrades);
+}

@@ -1,6 +1,6 @@
 import { enginePuller, enginePusher } from '@repo/redis/pubsub';
 import { handlePriceUpdate } from './priceupdate';
-import { handleOpenTrade, handleUserAdd } from './createuser';
+import { handleCloseTrade, handleOpenTrade, handleUserAdd } from './createuser';
 import { Trade } from '@repo/types/types';
 
 (async () => {
@@ -40,6 +40,12 @@ import { Trade } from '@repo/types/types';
     }
     else if (payload?.type === 'trade-close' && payload.message) {
       //add logic for closing trading and then acknowledge the server
+      console.log(payload.message);
+      const data = JSON.parse(payload.message);
+      console.log("email: ", data.email.email);
+      console.log("id: ", data.id);
+      console.log("orderid: ", data.orderId);
+      await handleCloseTrade(data.email.email, data.orderId, data.id);
     }
     else if (payload?.type === 'price-update' && payload.message) {
       //console.log('reached price update');

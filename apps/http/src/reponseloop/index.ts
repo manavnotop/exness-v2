@@ -31,6 +31,11 @@ export class ResponseLoop {
           this.idResponse[id]!();
           delete this.idResponse[id];
         }
+        else if(response[0]?.messages[0]?.message.type === "trade-close" && response[0].messages[0].message.id){
+          const id = response[0].messages[0].message.id;
+          this.idResponse[id]!();
+          delete this.idResponse[id];
+        }
       }
     }
   }

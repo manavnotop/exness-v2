@@ -52,11 +52,13 @@ export const closeTradeController = async (req: Request, res: Response) => {
   const { orderId } = validInput.data;
   const data = { email, id, orderId };
 
+  await tradePusher.xAdd('stream:engine', '*', {
+    type: "trade-close", 
+    message: JSON.stringify(data)
+  })
+
   try {
-    await tradePusher.xAdd('stream:engine', '*', {
-      type: "trade-close", 
-      message: JSON.stringify(data)
-    })
+    await responseLoop.waitForMessage(id);
     res.json({
       message: "order closed successfully"
     })

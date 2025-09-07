@@ -16,9 +16,9 @@ export const openTradeController = async (req: Request, res: Response) => {
     return;
   }
 
-  const { asset, type, margin, leverage, slippage } = validInput.data
+  const { asset, type, quantity, leverage, slippage, openPrice, decimal } = validInput.data
   const id = Date.now().toString();
-  const stimulatedInfo = { email, id, asset, type, margin, leverage, slippage };
+  const stimulatedInfo = { email, id, asset, type, quantity, leverage, slippage, openPrice, decimal };
 
   await tradePusher.xAdd('stream:engine', '*', {
     type: "trade-open",

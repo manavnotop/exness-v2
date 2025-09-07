@@ -1,4 +1,4 @@
-import { UserStore } from "@repo/types/types";
+import { Trade, UserStore } from "@repo/types/types";
 import { enginePusher } from "@repo/redis/pubsub";
 
 let users: UserStore = {
@@ -41,4 +41,15 @@ export async function handleUserAdd(message: string) {
   catch (error) {
     console.log(error);
   }
+}
+
+export async function handleOpenTrade(email: string, trade: Trade, id: string){
+  let user = users[email];
+
+  user?.openTrades.push(trade);
+  console.log(user?.openTrades);
+  await enginePusher.xAdd('stream:engine:acknowledgement', "*", {
+    type: "trade-open",
+    id: id
+  })
 }

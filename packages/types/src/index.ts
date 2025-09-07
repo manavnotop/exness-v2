@@ -41,24 +41,20 @@ export interface OpenTrade {
 export interface UserType {
   email: string,
   balance: number,
-  openTrades: PriceStore[]
+  openTrades: Trade[]
 }
 
 export type UserStore = Record<string, UserType>
 
 export interface Trade {
   id: string;
-  openPrice: number;
+  asset: string;
+  type: "long" | "short";
   quantity: number;
-  margin?: number;
-  side: string;
-  closePrice?: number;
   leverage: number;
-  pnl: number;
-  asset: AssetSymbols;
-  liquidated: boolean;
-  createdAt: Date;
-  closedAt?: Date;
+  slippage: number;
+  openPrice: number;
+  decimal: number;
 }
 
 export enum AssetSymbols {

@@ -1,6 +1,7 @@
 import { enginePuller, enginePusher } from '@repo/redis/pubsub';
 import { handlePriceUpdate } from './priceupdate';
-import { handleUserAdd } from './createUser';
+import { handleOpenTrade, handleUserAdd } from './createuser';
+import { Trade } from '@repo/types/types';
 
 (async () => {
   enginePuller.connect();
@@ -24,11 +25,18 @@ import { handleUserAdd } from './createUser';
     if (payload?.type === 'trade-open' && payload.message) {
       const tradeInfo = JSON.parse(payload.message)
       const id = tradeInfo.id;
-      console.log(id);
-      await enginePusher.xAdd('stream:engine:acknowledgement', "*", {
-        type: "trade-acknowledgement",
-        id: id
-      })
+      const email = tradeInfo.email.email;
+      const data: Trade = {
+        id: tradeInfo.id,
+        asset: tradeInfo.asset,
+        type: tradeInfo.type,
+        quantity: tradeInfo.quantity,
+        leverage: tradeInfo.leverage,
+        slippage: tradeInfo.slippage,
+        openPrice: tradeInfo.openPrice,
+        decimal: tradeInfo.decimal
+      }
+      await handleOpenTrade(email, data, id)
     }
     else if (payload?.type === 'trade-close' && payload.message) {
       //add logic for closing trading and then acknowledge the server

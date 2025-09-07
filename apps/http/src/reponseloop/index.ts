@@ -21,7 +21,7 @@ export class ResponseLoop {
 
       if (response) {
 
-        if (response[0]?.messages[0]?.message.type === "trade-acknowledgement" && response[0].messages[0].message.id) {
+        if (response[0]?.messages[0]?.message.type === "trade-open" && response[0].messages[0].message.id) {
           const id = (response[0].messages[0].message.id);
           this.idResponse[id]!();
           delete this.idResponse[id];

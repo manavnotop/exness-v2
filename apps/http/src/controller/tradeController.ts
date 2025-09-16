@@ -4,10 +4,8 @@ import { responseLoop } from "..";
 import { closeOrderSchema, createTradeSchema } from "@repo/types/zod"
 
 export const openTradeController = async (req: Request, res: Response) => {
-  console.log('reached');
   const validInput = createTradeSchema.safeParse(req.body);
   const email = (res as unknown as {email: string}).email
-  console.log(email);
 
   if (!validInput.success) {
     res.status(411).json({

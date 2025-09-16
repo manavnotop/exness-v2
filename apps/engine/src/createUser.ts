@@ -1,7 +1,7 @@
 import { Trade, UserStore } from "@repo/types/types";
 import { enginePusher } from "@repo/redis/pubsub";
 
-let users: UserStore = {
+export let users: UserStore = {
 
 }
 
@@ -44,7 +44,15 @@ export async function handleUserAdd(message: string) {
 }
 
 export async function handleOpenTrade(email: string, trade: Trade, id: string){
+  console.log(email);
   let user = users[email];
+  console.log("users", users);
+  console.log("user", user);
+
+  if (!user) {
+    console.log(`User ${email} not found`);
+    return;
+  }
 
   user?.openTrades.push(trade);
   console.log(user?.openTrades);
@@ -58,10 +66,17 @@ export async function handleCloseTrade(email: string, orderId: string, id: strin
   console.log(users[email]?.openTrades)
   const user = users[email];
 
+  if (!user) {
+    console.log(`User ${email} not found`);
+    return;
+  }
+
   const tradeIndex = user?.openTrades.findIndex((t) => t.id === orderId);
   console.log("this is trade index ", tradeIndex);
   
-  user?.openTrades.splice(tradeIndex!, 1);
+  if (tradeIndex !== undefined && tradeIndex !== -1) {
+    user?.openTrades.splice(tradeIndex, 1);
+  }
 
   await enginePusher.xAdd('stream:engine:acknowledgement', "*", {
     type: "trade-close",

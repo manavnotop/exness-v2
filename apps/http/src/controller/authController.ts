@@ -19,8 +19,6 @@ export const signupController = async (req: Request, res: Response) => {
     email: data.email
   }, process.env.JWT_SECRET!)
 
-  console.log(jwtToken);
-
   const toSend = {...data, id}
   
   //await sendSigninEmail(data.email, jwtToken)
@@ -32,13 +30,15 @@ export const signupController = async (req: Request, res: Response) => {
   try{
     await responseLoop.waitForMessage(id);
     res.json({
-      message: "user created successfully"
+      message: "user created successfully",
+      token: jwtToken
     })
   }
   catch(error){
     console.log(error);
     res.status(411).json({
-      message: "error occured while creating a user"
+      message: "error occured while creating a user",
+      jwt: jwtToken
     })
   }
 
@@ -57,12 +57,34 @@ export const signinController = async (req: Request, res: Response) => {
     return;
   }
 
-  const email = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+    const email = decoded.email;
 
-  res.cookie("jwt", token);
-  res.cookie("email", email);
-
-  res.json({
-    message: "login successful"
-  })
+    res.cookie("jwt", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: 'lax',
+      path: '/'
+    });
+    
+    res.cookie("email", email, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: 'lax',
+      path: '/'
+    });
+    
+    
+    res.json({
+      message: "login successful"
+    })
+  } catch (error) {
+    console.log("Token verification error:", error);
+    res.status(401).json({
+      message: "invalid token"
+    })
+  }
 }

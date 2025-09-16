@@ -1,6 +1,7 @@
 import { enginePuller, enginePusher } from '@repo/redis/pubsub';
 import { handlePriceUpdate } from './priceupdate';
 import { handleCloseTrade, handleOpenTrade, handleUserAdd } from './createuser';
+import { handleGetUserBalance, handleGetAssetBalance } from './balance';
 import { Trade } from '@repo/types/types';
 
 (async () => {
@@ -24,8 +25,10 @@ import { Trade } from '@repo/types/types';
 
     if (payload?.type === 'trade-open' && payload.message) {
       const tradeInfo = JSON.parse(payload.message)
+      console.log("tradeinfor", tradeInfo);
       const id = tradeInfo.id;
-      const email = tradeInfo.email.email;
+      const email = tradeInfo.email;
+      console.log("email", email);
       const data: Trade = {
         id: tradeInfo.id,
         asset: tradeInfo.asset,
@@ -40,12 +43,8 @@ import { Trade } from '@repo/types/types';
     }
     else if (payload?.type === 'trade-close' && payload.message) {
       //add logic for closing trading and then acknowledge the server
-      console.log(payload.message);
       const data = JSON.parse(payload.message);
-      console.log("email: ", data.email.email);
-      console.log("id: ", data.id);
-      console.log("orderid: ", data.orderId);
-      await handleCloseTrade(data.email.email, data.orderId, data.id);
+      await handleCloseTrade(data.email, data.orderId, data.id);
     }
     else if (payload?.type === 'price-update' && payload.message) {
       //console.log('reached price update');
@@ -54,6 +53,12 @@ import { Trade } from '@repo/types/types';
     }
     else if (payload?.type === 'user-add' && payload.message) {
       await handleUserAdd(payload.message);
+    }
+    else if (payload?.type === 'get-user-balance' && payload.message) {
+      await handleGetUserBalance(payload.message);
+    }
+    else if (payload?.type === 'get-asset-balance' && payload.message) {
+      await handleGetAssetBalance(payload.message);
     }
   }
 })()

@@ -28,7 +28,7 @@ import { Trade } from '@repo/types/types';
       console.log("tradeinfor", tradeInfo);
       const id = tradeInfo.id;
       const email = tradeInfo.email;
-      console.log("email", email);
+      //console.log("email", email);
       const data: Trade = {
         id: tradeInfo.id,
         asset: tradeInfo.asset,

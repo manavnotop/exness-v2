@@ -1,7 +1,16 @@
 import { NextRequest } from 'next/server';
 import axios from 'axios';
 
-export async function GET(request: NextRequest) {
+type BinanceKline = [
+  number, // open time in ms
+  string, // open
+  string, // high
+  string, // low
+  string, // close
+  ...unknown[]
+];
+
+export async function GET(request: NextRequest): Promise<Response> {
   const { searchParams } = new URL(request.url);
   const symbol = searchParams.get('symbol');
   const interval = searchParams.get('interval');
@@ -33,14 +42,14 @@ export async function GET(request: NextRequest) {
     if (startTime) params.set('startTime', startTime);
     if (endTime) params.set('endTime', endTime);
 
-    const response = await axios.get(`${binanceUrl}?${params.toString()}`, {
+    const response = await axios.get<BinanceKline[]>(`${binanceUrl}?${params.toString()}`, {
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
     // Transform the data to match our Kline interface
-    const klines = response.data.map((d: any) => ({
+    const klines = response.data.map((d: BinanceKline) => ({
       time: Math.floor(Number(d[0]) / 1000), // Convert milliseconds to seconds
       open: Number(d[1]),
       high: Number(d[2]),

@@ -62,7 +62,11 @@ export function useInfiniteKlines(symbol: string, interval: Interval, pageSize =
       const params = new URLSearchParams();
       params.set('symbol', mapToBinanceSymbol(symbol));
       params.set('interval', interval);
-      params.set('limit', String(pageSize));
+      
+      // For the first page, load only 40 candles to show initially
+      // For subsequent pages, load the full pageSize
+      const limit = pageParam ? pageSize : 100;
+      params.set('limit', String(limit));
 
       // pageParam represents endTime (ms) for Binance; we request window that ends before this
       if (pageParam) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { createChart, ColorType, UTCTimestamp, CandlestickSeries, type ISeriesApi, type IChartApi } from 'lightweight-charts';
+import { createChart, ColorType, UTCTimestamp, CandlestickSeries, type ISeriesApi, type IChartApi, type Time, type BusinessDay } from 'lightweight-charts';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useInfiniteKlines, type Interval } from '../hooks/useKlines';
 
@@ -16,6 +16,22 @@ interface ChartContainerProps {
   symbol?: string;
 }
 
+function mapKline(item: {
+  time: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+}): CandlestickData {
+  return {
+    time: item.time as UTCTimestamp,
+    open: item.open,
+    high: item.high,
+    low: item.low,
+    close: item.close,
+  };
+}
+
 export default function ChartContainer({ symbol = 'BTCUSDT' }: ChartContainerProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const [interval, setInterval] = useState<Interval>('5m');
@@ -25,24 +41,34 @@ export default function ChartContainer({ symbol = 'BTCUSDT' }: ChartContainerPro
   const chartRef = useRef<IChartApi | null>(null);
   const initialRangeSetRef = useRef<boolean>(false);
 
+  function timeToDate(time: Time): Date {
+    if (typeof time === 'number') {
+      return new Date(time * 1000);
+    }
+    const d = time as BusinessDay;
+    return new Date(Date.UTC(d.year, d.month - 1, d.day));
+  }
+
   // Reset the initial range guard when symbol or interval changes
   useEffect(() => {
     initialRangeSetRef.current = false;
   }, [symbol, interval]);
 
   const mergedData = useMemo(() => {
-    if (!pages) return [] as CandlestickData[];
-    const flat = pages.pages.flatMap(p => p.data);
-    // Sort ascending by time to ensure correct order
+    if (!pages) return [];
+  
+    const flat = pages.pages.flatMap((p) => p.data);
     const sorted = [...flat].sort((a, b) => a.time - b.time);
-    return sorted.map(item => ({
-      time: item.time as UTCTimestamp,
-      open: item.open,
-      high: item.high,
-      low: item.low,
-      close: item.close,
-    }));
+  
+    // Always limit to 40 until user scrolls and we actually append more
+    if (!initialRangeSetRef.current) {
+      return sorted.slice(-40).map(mapKline);
+    }
+  
+    return sorted.map(mapKline);
   }, [pages]);
+  
+  
 
   // Interval options for the dropdown
   const intervalOptions: { value: Interval; label: string }[] = [
@@ -68,10 +94,35 @@ export default function ChartContainer({ symbol = 'BTCUSDT' }: ChartContainerPro
       },
       width: chartContainerRef.current.clientWidth,
       height: chartContainerRef.current.clientHeight,
+      localization: {
+        timeFormatter: (time: Time) => {
+          const date = timeToDate(time);
+          return date.toLocaleString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          });
+        },
+      },
       timeScale: {
         timeVisible: true,
         secondsVisible: false,
         barSpacing: 8,
+        tickMarkFormatter: (time: Time) => {
+          const date = timeToDate(time);
+          return date.toLocaleString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            month: 'short',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+          });
+        },
       },
     });
     chartRef.current = chart;

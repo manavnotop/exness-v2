@@ -13,13 +13,13 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-100">
       <Navbar />
       <div className="flex h-screen pt-16"> {/* pt-16 to account for navbar height */}
-        <div className="w-1/4 p-4">
+        <div className="w-1/4 p-1">
           <LeftColumn onStockSelect={setSelectedStock} />
         </div>
-        <div className="w-2/4 p-4">
+        <div className="w-2/4 ">
           <MiddleColumn selectedStock={selectedStock} />
         </div>
-        <div className="w-1/4 p-4">
+        <div className="w-1/4 p-1">
           <RightColumn />
         </div>
       </div>

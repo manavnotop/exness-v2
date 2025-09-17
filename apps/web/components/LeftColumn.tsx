@@ -20,30 +20,32 @@ export default function LeftColumn({ onStockSelect }: { onStockSelect?: (symbol:
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-4 h-full">
-      <h2 className="text-lg font-bold mb-4">Market Prices</h2>
-      <table className="w-full">
-        <thead>
-          <tr className="border-b">
-            <th className="text-left py-2">Stock</th>
-            <th className="text-left py-2">Bid</th>
-            <th className="text-left py-2">Ask</th>
-          </tr>
-        </thead>
-        <tbody>
-          {stockData.map((stock, index) => (
-            <tr 
-              key={index} 
-              className={`border-b cursor-pointer hover:bg-gray-100 ${selectedStock === stock.symbol ? 'bg-blue-50' : ''}`}
-              onClick={() => handleStockClick(stock.symbol)}
-            >
-              <td className="py-2">{stock.name}</td>
-              <td className="py-2">${stock.bid.toFixed(2)}</td>
-              <td className="py-2">${stock.ask.toFixed(2)}</td>
+    <div className="bg-white rounded-lg shadow h-full">
+      <div className="p-4 h-full">
+        <h2 className="text-lg font-bold mb-4">Market Prices</h2>
+        <table className="w-full">
+          <thead>
+            <tr className="border-b">
+              <th className="text-left py-2">Stock</th>
+              <th className="text-left py-2">Bid</th>
+              <th className="text-left py-2">Ask</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {stockData.map((stock, index) => (
+              <tr 
+                key={index} 
+                className={`border-b cursor-pointer hover:bg-gray-100 ${selectedStock === stock.symbol ? 'bg-blue-50' : ''}`}
+                onClick={() => handleStockClick(stock.symbol)}
+              >
+                <td className="py-2">{stock.name}</td>
+                <td className="py-2">${stock.bid.toFixed(2)}</td>
+                <td className="py-2">${stock.ask.toFixed(2)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

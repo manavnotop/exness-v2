@@ -46,6 +46,10 @@ export default function ChartContainer({ symbol = 'BTCUSDT' }: ChartContainerPro
       },
       width: chartContainerRef.current.clientWidth,
       height: chartContainerRef.current.clientHeight,
+      timeScale: {
+        timeVisible: true,
+        secondsVisible: false,
+      },
     });
 
     // Add candlestick series
@@ -75,11 +79,12 @@ export default function ChartContainer({ symbol = 'BTCUSDT' }: ChartContainerPro
         return;
       }
 
-      if (data && data.length > 0) {
+      if (data) {
         try {
           // Convert data to candlestick format
+          // The time is already in seconds from the API, so we just cast it
           const candlestickData: CandlestickData[] = data.map(item => ({
-            time: item.time as UTCTimestamp,
+            time: item.time as UTCTimestamp, // This is already in seconds
             open: item.open,
             high: item.high,
             low: item.low,
@@ -109,7 +114,7 @@ export default function ChartContainer({ symbol = 'BTCUSDT' }: ChartContainerPro
       window.removeEventListener('resize', handleResize);
       chart.remove();
     };
-  }, [data, isLoading, error]);
+  }, [data, isLoading, error, interval]);
 
   const handleIntervalChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setInterval(e.target.value as Interval);
@@ -143,7 +148,7 @@ export default function ChartContainer({ symbol = 'BTCUSDT' }: ChartContainerPro
       {/* Chart container */}
       <div 
         ref={chartContainerRef} 
-        className="w-full"
+        className="w-full h-full border border-gray-300 rounded-lg overflow-hidden"
       />
       
       {chartError && (

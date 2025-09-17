@@ -1,8 +1,8 @@
 'use client';
 
-import { createChart, ColorType, UTCTimestamp, CandlestickSeries } from 'lightweight-charts';
-import { useEffect, useRef, useState } from 'react';
-import { useKlines, type Interval } from '../hooks/useKlines';
+import { createChart, ColorType, UTCTimestamp, CandlestickSeries, type ISeriesApi, type IChartApi } from 'lightweight-charts';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useInfiniteKlines, type Interval } from '../hooks/useKlines';
 
 interface CandlestickData {
   time: UTCTimestamp;
@@ -19,8 +19,30 @@ interface ChartContainerProps {
 export default function ChartContainer({ symbol = 'BTCUSDT' }: ChartContainerProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const [interval, setInterval] = useState<Interval>('5m');
-  const { data, isLoading, error } = useKlines(symbol, interval, 100);
+  const { data: pages, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteKlines(symbol, interval, 100);
   const [chartError, setChartError] = useState<string | null>(null);
+  const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+  const initialRangeSetRef = useRef<boolean>(false);
+
+  // Reset the initial range guard when symbol or interval changes
+  useEffect(() => {
+    initialRangeSetRef.current = false;
+  }, [symbol, interval]);
+
+  const mergedData = useMemo(() => {
+    if (!pages) return [] as CandlestickData[];
+    const flat = pages.pages.flatMap(p => p.data);
+    // Sort ascending by time to ensure correct order
+    const sorted = [...flat].sort((a, b) => a.time - b.time);
+    return sorted.map(item => ({
+      time: item.time as UTCTimestamp,
+      open: item.open,
+      high: item.high,
+      low: item.low,
+      close: item.close,
+    }));
+  }, [pages]);
 
   // Interval options for the dropdown
   const intervalOptions: { value: Interval; label: string }[] = [
@@ -49,8 +71,10 @@ export default function ChartContainer({ symbol = 'BTCUSDT' }: ChartContainerPro
       timeScale: {
         timeVisible: true,
         secondsVisible: false,
+        barSpacing: 8,
       },
     });
+    chartRef.current = chart;
 
     // Add candlestick series
     const candlestickSeries = chart.addSeries(CandlestickSeries, {
@@ -60,6 +84,7 @@ export default function ChartContainer({ symbol = 'BTCUSDT' }: ChartContainerPro
       wickUpColor: '#26a69a',
       wickDownColor: '#ef5350',
     });
+    seriesRef.current = candlestickSeries as unknown as ISeriesApi<'Candlestick'>;
 
     // Handle window resize
     const handleResize = () => {
@@ -79,23 +104,24 @@ export default function ChartContainer({ symbol = 'BTCUSDT' }: ChartContainerPro
         return;
       }
 
-      if (data) {
+      if (mergedData && mergedData.length > 0) {
         try {
-          // Convert data to candlestick format
-          // The time is already in seconds from the API, so we just cast it
-          const candlestickData: CandlestickData[] = data.map(item => ({
-            time: item.time as UTCTimestamp, // This is already in seconds
-            open: item.open,
-            high: item.high,
-            low: item.low,
-            close: item.close,
-          }));
+          candlestickSeries.setData(mergedData);
 
-          // Set data to series
-          candlestickSeries.setData(candlestickData);
-
-          // Fit chart to data
-          chart.timeScale().fitContent();
+          // On first render for this dataset, show only the most recent 40 candles
+          if (!initialRangeSetRef.current && mergedData.length > 0) {
+            if (mergedData.length > 40) {
+              const recent = mergedData.slice(-40);
+              if (recent.length > 0) {
+                const from = recent[0]!.time;
+                const to = recent[recent.length - 1]!.time;
+                chart.timeScale().setVisibleRange({ from, to });
+              }
+            } else {
+              chart.timeScale().scrollToRealTime();
+            }
+            initialRangeSetRef.current = true;
+          }
           setChartError(null);
         } catch (err) {
           setChartError('Error processing chart data');
@@ -114,7 +140,38 @@ export default function ChartContainer({ symbol = 'BTCUSDT' }: ChartContainerPro
       window.removeEventListener('resize', handleResize);
       chart.remove();
     };
-  }, [data, isLoading, error, interval]);
+  }, [mergedData, isLoading, error, interval]);
+
+  // Detect when user scrolls/pans near the left edge and fetch older data
+  useEffect(() => {
+    const chart = chartRef.current;
+    const series = seriesRef.current;
+    if (!chart || !series) return;
+
+    const handler = () => {
+      const timeScale = chart.timeScale();
+      const visibleRange = timeScale.getVisibleLogicalRange();
+      const visible = timeScale.getVisibleRange();
+      // Fallback to logical range if needed
+      if (!visibleRange && !visible) return;
+
+      // If scrolled within first 10% of bars, fetch more
+      const logical = timeScale.getVisibleLogicalRange();
+      if (!logical) return;
+      const from = logical.from;
+      // When from is close to 0, we are at left edge
+      if (from !== null && from < 10 && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    };
+
+    const ts = chart.timeScale();
+    ts.subscribeVisibleLogicalRangeChange(handler);
+
+    return () => {
+      ts.unsubscribeVisibleLogicalRangeChange(handler);
+    };
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   const handleIntervalChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setInterval(e.target.value as Interval);

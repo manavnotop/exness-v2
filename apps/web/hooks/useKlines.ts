@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 
 const KLINES_BASE = '/api/binance/klines'; // Use our own API proxy
@@ -50,6 +50,40 @@ export function useKlines(symbol: string, interval: Interval, limit = 100) {
       console.log('[klines] response', data);
       return data as Kline[];
     },
+    staleTime: 60_000,
+    enabled: Boolean(symbol && interval),
+  });
+}
+
+export function useInfiniteKlines(symbol: string, interval: Interval, pageSize = 200) {
+  return useInfiniteQuery<{ data: Kline[]; oldestTimeSec: number | null }, Error>({
+    queryKey: ['infinite-klines', symbol, interval, pageSize],
+    queryFn: async ({ pageParam }) => {
+      const params = new URLSearchParams();
+      params.set('symbol', mapToBinanceSymbol(symbol));
+      params.set('interval', interval);
+      params.set('limit', String(pageSize));
+
+      // pageParam represents endTime (ms) for Binance; we request window that ends before this
+      if (pageParam) {
+        params.set('endTime', String(pageParam));
+      }
+
+      const url = `${KLINES_BASE}?${params.toString()}`;
+      const { data } = await axios.get(url);
+      const klines = data as Kline[];
+
+      // Determine the next pageParam as the ms of the first candle - 1ms
+      const oldest = klines[0];
+      const oldestTimeSec = oldest ? oldest.time : null;
+      return { data: klines, oldestTimeSec };
+    },
+    getNextPageParam: (lastPage) => {
+      // lastPage.oldestTimeSec is in seconds; Binance expects ms
+      if (!lastPage.oldestTimeSec) return undefined;
+      return lastPage.oldestTimeSec * 1000 - 1;
+    },
+    initialPageParam: undefined,
     staleTime: 60_000,
     enabled: Boolean(symbol && interval),
   });

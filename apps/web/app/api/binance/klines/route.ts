@@ -6,6 +6,8 @@ export async function GET(request: NextRequest) {
   const symbol = searchParams.get('symbol');
   const interval = searchParams.get('interval');
   const limit = searchParams.get('limit') || '100';
+  const startTime = searchParams.get('startTime');
+  const endTime = searchParams.get('endTime');
 
   if (!symbol || !interval) {
     return new Response(
@@ -26,6 +28,10 @@ export async function GET(request: NextRequest) {
       interval,
       limit,
     });
+
+    // Forward optional pagination params if provided (Binance expects ms)
+    if (startTime) params.set('startTime', startTime);
+    if (endTime) params.set('endTime', endTime);
 
     const response = await axios.get(`${binanceUrl}?${params.toString()}`, {
       headers: {
